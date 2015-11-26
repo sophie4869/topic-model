@@ -1,6 +1,7 @@
 #_*_ coding: utf-8 _*_
 import json
 import sys
+sys.path.append("/home/tingyubi/20w/data/")
 
 # getText
 # params: @prefix: prefix in data file name prefix-X.json
@@ -8,10 +9,10 @@ import sys
 #         @quality: return result has quality(context)>=X
 #         @context: 'text'/'titile'/'ad-slots'
 # return: array of quality-context, content-context
-def getText(prefix='extraction-',begin=1,end=26,quality = 2, context = 'text'):
+def getText(path="/home/tingyubi/20w/data/",prefix='extraction-',begin=1,end=26,quality = 2, context = 'text'):
     d=[]
     for i in range(begin,end+1):
-        fp=prefix+str(i)+'.json'
+        fp=path+prefix+str(i)+'.json'
         d+=json.load(open(fp))
     q=[d[i]['quality']['text'] for i in range(len(d))]
     txt=[d[i]['content'][context] for i in range(len(d))]
