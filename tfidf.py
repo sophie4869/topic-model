@@ -20,8 +20,8 @@ sys.path.append("/home/tingyubi/20w/data/")
 
 def tfidf(max_features=10000,path="/home/tingyubi/20w/data/",prefix="extraction-",begin=1, end=26):
     ### get stopwords
-    sf = open('chi_,.txt','r')
-    stopwords = [x.strip().decode('utf-8') for x in sf.read().split(',')]
+    sf = open('chi_n.txt','r')
+    stopwords = [x.strip().decode('utf-8') for x in sf.read().split('\n')]
     sf.close()
     ### load data
     d={}
@@ -41,7 +41,7 @@ def tfidf(max_features=10000,path="/home/tingyubi/20w/data/",prefix="extraction-
     #corpus = json.load(f)
     f.close()
     ### tfidf vectorizer
-    vectorizer=tv(max_features=max_features)#tokenizer=tokenizer)
+    vectorizer=tv(max_features=max_features,stop_words=stopwords)#tokenizer=tokenizer)
     tfidf=vectorizer.fit_transform(corpus.values())#.toarray()
     print "Tfidf vectorizing cost "+str(time.time()-getdatatime)+" seconds."
     #print tfidf.shape
@@ -67,11 +67,11 @@ def tfidf(max_features=10000,path="/home/tingyubi/20w/data/",prefix="extraction-
     vocfile = "tfidf_"+prefix+str(begin)+"_"+str(end)+".voc"
     f = open(vocfile,'w')
     voca=voc
-    f.write("\n".join(voca))
+    f.write("\n".join(voca).encode('utf-8'))
     f.close()
     return tfidf,voc,txt
 
-tfidf()
+tfidf(begin=2,end=2)
 def tfidf_iterator(batch_size=100,max_features=10000,path="/home/tingyubi/20w/data/",prefix="extraction-",begin=1,end=26):
     #tf,voc,txt = tfidf(max_features=max_features,path=path,prefix=prefix,begin=begin,end=end)
     #jsonfile = "tfidf_"+prefix+str(begin)+"_"+str(end)+".json"
@@ -84,7 +84,7 @@ def tfidf_iterator(batch_size=100,max_features=10000,path="/home/tingyubi/20w/da
     vocfile = "tfidf_"+prefix+str(begin)+"_"+str(end)+".voc"
     #vocfile = "allvoc.txt"
     f = open(vocfile,'r')
-    voc=f.read().split("\n")
+    voc=f.read().decode('utf-8').split("\n")
     f.close()
     tf = tf.toarray()
     tf = tf / (np.max(tf,axis = 1)[:, None] + 1e-10)
