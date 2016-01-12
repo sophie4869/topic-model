@@ -1,9 +1,12 @@
+import sys
+sys.path.append('../bow_text_cls')
 import mxnet as mx
-from data_all_ import news_iterator, mnist_iterator
+#from data_all import news_iterator, mnist_iterator
 import numpy as np
 import logging
 import copy
-
+#from tfidf import tfidf_iterator
+from tfidf import tfidf_iterator_labelisx
 batch_size = 128
 
 def l2_norm(label, pred):
@@ -14,35 +17,37 @@ def SGD(weight, grad, lr=0.1, grad_norm=batch_size):
 if __name__ == '__main__':
     # set to INFO to see less information during training
     logging.basicConfig(level=logging.DEBUG)
-    
+    train, val, voc = tfidf_iterator_labelisx(batch_size)
     num_gpu = 1
     gpus = [mx.gpu(i) for i in range(num_gpu)]
     dev=mx.gpu()
-    train, val, voc = news_iterator(5000, 128, "x")
+    #train, val, voc = news_iterator(5000, 128, "x")
     istack = 0
     data = mx.symbol.Variable('data')
     fc1 = mx.symbol.FullyConnected(name='encoder_%d'%istack, data=data, num_hidden=20)
     sig1 = mx.symbol.Activation(data=fc1, act_type='sigmoid')
-    sparse1 = mx.symbol.SparseReg(data=sig1, penalty=1e-3, sparseness_target=0.1)
-    fc2 = mx.symbol.FullyConnected(name='decoder_%d'%istack, data=sparse1, num_hidden=5000)
+    sparse1 = mx.symbol.IdentityAttachKLSparseReg(data=sig1, penalty=1e-4, sparseness_target=0.1)
+    fc2 = mx.symbol.FullyConnected(name='decoder_%d'%istack, data=sparse1, num_hidden=10000)
     loss = mx.symbol.LinearRegressionOutput(data=fc2, name='softmax')
 
     print loss.get_internals().list_outputs()
-    model = mx.model.FeedForward(ctx=gpus, symbol=loss, num_epoch=100,
-                             learning_rate=100, momentum=0.9, wd=0)
+    model = mx.model.FeedForward(ctx=gpus, symbol=loss, num_epoch=10,
+                             learning_rate=10, momentum=0.9, wd=0)
 
-    model.fit(X=train, eval_data=val,
+    model.fit(X=train, #eval_data=val,
           eval_metric=mx.metric.CustomMetric(l2_norm))
 
     print loss.get_internals().list_outputs()
     print loss.get_internals().list_arguments()  
     print model.arg_params['encoder_0_weight'].shape
-    for k in range(2):
+    for k in range(20):
         words_index=np.argsort(model.arg_params['encoder_0_weight'].asnumpy()[k,:])
         logging.info('Topic %d' % k)
         logging.info([voc[i] for i in words_index[-20:]])
 
-
+    weight = model.arg_params['encoder_0_weight'].asnumpy()
+    print float(np.sum(weight==0)) / (weight.shape[0] * weight.shape[1])
+"""
     for k in range(2):
         data_shape=(1,5000)
         arg_names = fc2.list_arguments() 
@@ -78,3 +83,4 @@ if __name__ == '__main__':
         #logging.info(words_index[-20:])
         logging.info('Topic %d' % k)
         logging.info([voc[i] for i in words_index[-20:]])
+"""
