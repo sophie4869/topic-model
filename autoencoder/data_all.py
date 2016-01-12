@@ -15,12 +15,14 @@ import sklearn.preprocessing as pp
 def raw_to_words(raw): # words only
     text = raw#bs(raw).get_text()
     letters = re.sub("[^a-zA-Z]"," ",text)
-    stops = set(stopwords.words("english"))
+    sf = open('/home/tingyubi/20w/data/eng_n.txt','r')
+    stops = [x.strip().decode('utf-8') for x in sf.read().split('\n')]
+    #stops = set(stopwords.words("english"))
     words = letters.lower().split()
     meaningful = [w for w in words if not w in stops]
     return " ".join(meaningful)
 
-def news_iterator(input_size,alldata=True,batchsize=100,label="y"):
+def news_iterator(input_size,batchsize=100,alldata=True,label="y"):
     # Load some categories from the training set
     categories = [
         'alt.atheism',
@@ -108,7 +110,7 @@ def news_iterator_raw(input_size,batchsize):
     print("Loading 20 newsgroups dataset for 20 categories.")
     #print(categories)
     traindata = fetch_20newsgroups(subset='train', remove=('headers','footers','quotes'),categories=None)
-    tfidf_vectorizer = CountVectorizer(max_df=0.95, min_df=2, max_features=input_size,
+    tfidf_vectorizer = cv(max_df=0.95, min_df=2, max_features=input_size,
                                    stop_words='english')
     train = tfidf_vectorizer.fit_transform(traindata.data)
 
@@ -125,7 +127,7 @@ def news_iterator_raw(input_size,batchsize):
     x = test_features.astype(np.float64).toarray()
     test_x = x / (np.sum(x, axis=1)[:, None] + 1e-10)
     test_y = testdata.target
-    return (train_x, train_y, test_x, test_y)
+    return (train_x, train_y, test_x, test_y, vocabulary)
 
 
 def test_iterator(batchsize,input_size):
